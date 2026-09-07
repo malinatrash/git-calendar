@@ -1,0 +1,82 @@
+name: Build macOS DMG
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode 26
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app/Contents/Developer
+
+      - name: Test
+        run: |
+          set -euo pipefail
+          xcodebuild -quiet \
+            -project GitCalendar.xcodeproj \
+            -scheme GitCalendar \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath .ciDerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+
+      - name: Build release app
+        run: |
+          set -euo pipefail
+          xcodebuild -quiet \
+            -project GitCalendar.xcodeproj \
+            -scheme GitCalendar \
+            -configuration Release \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath .ciDerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Resolve artifact version
+        id: version
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="1.0.0-dev-${GITHUB_SHA:0:7}"
+          fi
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Create DMG
+        run: |
+          ./scripts/package_dmg.sh \
+            .ciDerivedData/Build/Products/Release/GitCalendar.app \
+            "${{ steps.version.outputs.value }}" \
+            dist
+
+      - name: Upload DMG artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GitCalendar-${{ steps.version.outputs.value }}
+          path: dist/*.dmg
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            dist/*.dmg \
+            --verify-tag \
+            --generate-notes \
+            --title "Git Calendar $GITHUB_REF_NAME"
