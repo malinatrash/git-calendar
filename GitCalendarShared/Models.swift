@@ -1,7 +1,9 @@
 import Foundation
 
 enum SharedConstants {
-    static let appGroup = "group.io.github.malinatrash.GitCalendar"
+    static var appGroup: String {
+        Bundle.main.object(forInfoDictionaryKey: "AppGroupIdentifier") as? String ?? ""
+    }
     static let widgetKind = "GitCalendarWidget"
 }
 

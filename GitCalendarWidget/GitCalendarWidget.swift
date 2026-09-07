@@ -5,12 +5,18 @@ import WidgetKit
 struct GitCalendarEntry: TimelineEntry {
     let date: Date
     let snapshot: WidgetCalendarSnapshot?
+    let hasSnapshot: Bool
     let configuration: CalendarWidgetIntent
 }
 
 struct GitCalendarProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> GitCalendarEntry {
-        GitCalendarEntry(date: Date(), snapshot: Self.preview, configuration: CalendarWidgetIntent())
+        GitCalendarEntry(
+            date: Date(),
+            snapshot: Self.preview,
+            hasSnapshot: true,
+            configuration: CalendarWidgetIntent()
+        )
     }
 
     func snapshot(for configuration: CalendarWidgetIntent, in context: Context) async -> GitCalendarEntry {
@@ -23,11 +29,46 @@ struct GitCalendarProvider: AppIntentTimelineProvider {
     }
 
     private func entry(for configuration: CalendarWidgetIntent) -> GitCalendarEntry {
+        let configurations = SharedStore.loadConfigurations()
         let snapshots = SharedStore.loadWidgetSnapshots()
-        let selected = configuration.calendar.flatMap { selected in
-            snapshots.first { $0.configurationID == selected.id }
-        } ?? snapshots.first
-        return GitCalendarEntry(date: Date(), snapshot: selected, configuration: configuration)
+        let selectedID = configuration.calendar?.id ?? configurations.first?.id
+        let selectedSnapshot = selectedID.flatMap { id in
+            snapshots.first { $0.configurationID == id }
+        }
+        let selectedConfiguration = selectedID.flatMap { id in
+            configurations.first { $0.id == id }
+        }
+        let snapshot = selectedSnapshot ?? selectedConfiguration.map(Self.emptySnapshot)
+        return GitCalendarEntry(
+            date: Date(),
+            snapshot: snapshot,
+            hasSnapshot: selectedSnapshot != nil,
+            configuration: configuration
+        )
+    }
+
+    private static func emptySnapshot(for configuration: CalendarConfiguration) -> WidgetCalendarSnapshot {
+        let calendar = CalendarSupport.calendar(timeZoneIdentifier: configuration.timeZoneIdentifier)
+        let today = calendar.startOfDay(for: Date())
+        let days = (0..<365).compactMap { offset -> DayActivity? in
+            guard let date = calendar.date(byAdding: .day, value: offset - 364, to: today) else { return nil }
+            return DayActivity(
+                dayKey: CalendarSupport.dayKey(for: date, timeZoneIdentifier: configuration.timeZoneIdentifier),
+                date: date,
+                commitCount: 0,
+                changedLines: 0,
+                riskPercent: 0,
+                effortUnits: 0
+            )
+        }
+        return WidgetCalendarSnapshot(
+            configurationID: configuration.id,
+            name: configuration.name,
+            timeZoneIdentifier: configuration.timeZoneIdentifier,
+            generatedAt: Date(),
+            days: days,
+            summary: .empty
+        )
     }
 
     private static var preview: WidgetCalendarSnapshot {
@@ -63,7 +104,9 @@ struct GitCalendarWidgetView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 1) {
                         Text(snapshot.name).font(.headline).lineLimit(1)
-                        Text("\(snapshot.summary.commitsPerWeek.formatted(.number.precision(.fractionLength(1)))) коммита/нед")
+                        Text(entry.hasSnapshot
+                             ? "\(snapshot.summary.commitsPerWeek.formatted(.number.precision(.fractionLength(1)))) коммита/нед"
+                             : "Ожидает первого сканирования")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -83,7 +126,11 @@ struct GitCalendarWidgetView: View {
                 )
                 Spacer(minLength: 0)
                 HStack {
-                    Text("BCE/day proxy \(snapshot.summary.bcePerDayProxy.formatted(.number.precision(.fractionLength(1))))")
+                    if entry.hasSnapshot {
+                        Text("BCE/day proxy \(snapshot.summary.bcePerDayProxy.formatted(.number.precision(.fractionLength(1))))")
+                    } else {
+                        Text("Откройте приложение для обновления")
+                    }
                     Spacer()
                     Text(snapshot.generatedAt, style: .time)
                 }
@@ -92,17 +139,36 @@ struct GitCalendarWidgetView: View {
             }
             .containerBackground(.fill.tertiary, for: .widget)
         } else {
-            ContentUnavailableView("Нет календаря", systemImage: "calendar.badge.plus")
-                .containerBackground(.fill.tertiary, for: .widget)
+            VStack(spacing: 10) {
+                PlaceholderHeatmap()
+                Label("Добавьте папку в Git Calendar", systemImage: "calendar.badge.plus")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .containerBackground(.fill.tertiary, for: .widget)
         }
     }
 
     private var dayLimit: Int {
         switch family {
-        case .systemLarge: 182
-        case .systemMedium: 112
-        default: 49
+        case .systemLarge, .systemMedium: 365
+        default: 84
         }
+    }
+}
+
+private struct PlaceholderHeatmap: View {
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 2), count: 12)
+
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: 2) {
+            ForEach(0..<84, id: \.self) { _ in
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(.secondary.opacity(0.13))
+                    .aspectRatio(1, contentMode: .fit)
+            }
+        }
+        .accessibilityHidden(true)
     }
 }
 
@@ -128,7 +194,10 @@ private struct WidgetHeatmap: View {
     var body: some View {
         GeometryReader { geometry in
             let spacing = 2.0
-            let cell = max(4, min(12, (geometry.size.height - spacing * 6) / 7))
+            let columnCount = max(weeks.count, 1)
+            let cellByHeight = (geometry.size.height - spacing * 6) / 7
+            let cellByWidth = (geometry.size.width - spacing * Double(columnCount - 1)) / Double(columnCount)
+            let cell = max(2, min(12, min(cellByHeight, cellByWidth)))
             HStack(alignment: .top, spacing: spacing) {
                 ForEach(Array(weeks.enumerated()), id: \.offset) { _, week in
                     VStack(spacing: spacing) {

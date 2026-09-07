@@ -14,79 +14,90 @@ struct CalendarEditorView: View {
     }
 
     var body: some View {
-        Form {
-            Section("Календарь") {
-                TextField("Название", text: $configuration.name)
-                LabeledContent("Папка") {
-                    HStack {
-                        Text(configuration.folderPath).lineLimit(1).truncationMode(.middle)
-                        Button("Выбрать…", action: chooseFolder)
+        VStack(spacing: 0) {
+            Form {
+                Section("Календарь") {
+                    TextField("Название", text: $configuration.name)
+                    LabeledContent("Папка") {
+                        HStack {
+                            Text(configuration.folderPath).lineLimit(1).truncationMode(.middle)
+                            Button("Выбрать…", action: chooseFolder)
+                        }
                     }
+                    TextField("Часовой пояс", text: $configuration.timeZoneIdentifier)
+                    LabeledContent("Начало статистики", value: "Первый коммит выбранного автора")
+                    Stepper(
+                        "Обновление: каждые \(configuration.refreshIntervalMinutes) мин",
+                        value: $configuration.refreshIntervalMinutes,
+                        in: 5...120,
+                        step: 5
+                    )
                 }
-                TextField("Часовой пояс", text: $configuration.timeZoneIdentifier)
-                LabeledContent("Начало статистики", value: "Первый коммит выбранного автора")
-                Stepper(
-                    "Обновление: каждые \(configuration.refreshIntervalMinutes) мин",
-                    value: $configuration.refreshIntervalMinutes,
-                    in: 5...120,
-                    step: 5
-                )
-            }
 
-            Section("Авторство") {
-                TextEditor(text: $authorText)
-                    .font(.system(.body, design: .monospaced))
-                    .frame(minHeight: 70)
-                Text("Имя или email — по одному на строке. Пустое поле учитывает всех авторов.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+                Section("Авторство") {
+                    TextEditor(text: $authorText)
+                        .font(.system(.body, design: .monospaced))
+                        .frame(minHeight: 70)
+                    Text("Имя или email — по одному на строке. Пустое поле учитывает всех авторов.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
 
-            Section("Git") {
-                Toggle("Учитывать все локальные ветки и refs", isOn: $configuration.includeAllRefs)
-                Toggle("Учитывать merge-коммиты", isOn: $configuration.includeMerges)
-            }
+                Section("Git") {
+                    Toggle("Учитывать все локальные ветки и refs", isOn: $configuration.includeAllRefs)
+                    Toggle("Учитывать merge-коммиты", isOn: $configuration.includeMerges)
+                }
 
-            Section("Пороговые значения риска") {
-                Stepper(
-                    "Крупное изменение: \(configuration.largeChangeThreshold) строк",
-                    value: $configuration.largeChangeThreshold,
-                    in: 100...5_000,
-                    step: 50
-                )
-                Stepper(
-                    "Ожидать тесты после: \(configuration.testsExpectedAfterLines) строк",
-                    value: $configuration.testsExpectedAfterLines,
-                    in: 20...1_000,
-                    step: 20
-                )
-                Stepper(
-                    "Широкое изменение: \(configuration.wideChangeFileThreshold) файлов",
-                    value: $configuration.wideChangeFileThreshold,
-                    in: 5...100,
-                    step: 5
-                )
+                Section("Пороговые значения риска") {
+                    Stepper(
+                        "Крупное изменение: \(configuration.largeChangeThreshold) строк",
+                        value: $configuration.largeChangeThreshold,
+                        in: 100...5_000,
+                        step: 50
+                    )
+                    Stepper(
+                        "Ожидать тесты после: \(configuration.testsExpectedAfterLines) строк",
+                        value: $configuration.testsExpectedAfterLines,
+                        in: 20...1_000,
+                        step: 20
+                    )
+                    Stepper(
+                        "Широкое изменение: \(configuration.wideChangeFileThreshold) файлов",
+                        value: $configuration.wideChangeFileThreshold,
+                        in: 5...100,
+                        step: 5
+                    )
+                }
             }
-        }
-        .formStyle(.grouped)
-        .frame(width: 620, height: 650)
-        .navigationTitle("Настройка календаря")
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
+            .formStyle(.grouped)
+
+            Divider()
+            HStack {
+                Spacer()
                 Button("Отмена") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                Button("Сохранить", action: save)
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(
+                        configuration.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            || configuration.folderPath.isEmpty
+                    )
             }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Сохранить") {
-                    configuration.authorPatterns = authorText
-                        .components(separatedBy: .newlines)
-                        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-                        .filter { !$0.isEmpty }
-                    onSave(configuration)
-                    dismiss()
-                }
-                .disabled(configuration.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || configuration.folderPath.isEmpty)
-            }
+            .padding()
+            .background(.regularMaterial)
         }
+        .frame(width: 620, height: 700)
+        .navigationTitle("Настройка календаря")
+    }
+
+    private func save() {
+        configuration.authorPatterns = authorText
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        onSave(configuration)
+        dismiss()
     }
 
     private func chooseFolder() {

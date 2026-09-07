@@ -5,6 +5,7 @@ project_root="${0:A:h:h}"
 app_path="${1:-$project_root/.derivedData/Build/Products/Release/GitCalendar.app}"
 version="${2:-1.0.0}"
 output_dir="${3:-$project_root/dist}"
+signing_identity="${4:-}"
 
 if [[ ! -d "$app_path" ]]; then
   print -u2 "Приложение не найдено: $app_path"
@@ -26,15 +27,37 @@ ditto "$app_path" "$staging_dir/Git Calendar.app"
 ln -s /Applications "$staging_dir/Applications"
 
 widget_path="$staging_dir/Git Calendar.app/Contents/PlugIns/GitCalendarWidget.appex"
-if [[ -d "$widget_path" ]]; then
-  codesign --force --sign - \
-    --entitlements "$project_root/GitCalendarWidget/GitCalendarWidget.entitlements" \
-    "$widget_path"
+staged_app="$staging_dir/Git Calendar.app"
+
+if [[ -z "$signing_identity" ]] && ! codesign --verify --deep --strict "$staged_app" 2>/dev/null; then
+  signing_identity="-"
 fi
-codesign --force --sign - \
-  --entitlements "$project_root/GitCalendarApp/GitCalendar.entitlements" \
-  "$staging_dir/Git Calendar.app"
-codesign --verify --deep --strict "$staging_dir/Git Calendar.app"
+
+if [[ -n "$signing_identity" ]]; then
+  app_group="$(/usr/libexec/PlistBuddy -c 'Print :AppGroupIdentifier' "$staged_app/Contents/Info.plist")"
+  if [[ -z "$app_group" || "$app_group" == *'$('* ]]; then
+    print -u2 "Не удалось определить App Group из собранного приложения"
+    exit 1
+  fi
+
+  app_entitlements="$staging_dir/app.entitlements"
+  widget_entitlements="$staging_dir/widget.entitlements"
+  cp "$project_root/GitCalendarApp/GitCalendar.entitlements" "$app_entitlements"
+  cp "$project_root/GitCalendarWidget/GitCalendarWidget.entitlements" "$widget_entitlements"
+  /usr/libexec/PlistBuddy -c "Set :com.apple.security.application-groups:0 $app_group" "$app_entitlements"
+  /usr/libexec/PlistBuddy -c "Set :com.apple.security.application-groups:0 $app_group" "$widget_entitlements"
+
+  if [[ -d "$widget_path" ]]; then
+    codesign --force --sign "$signing_identity" \
+      --entitlements "$widget_entitlements" \
+      "$widget_path"
+  fi
+  codesign --force --sign "$signing_identity" \
+    --entitlements "$app_entitlements" \
+    "$staged_app"
+  rm -f "$app_entitlements" "$widget_entitlements"
+fi
+codesign --verify --deep --strict "$staged_app"
 
 output_path="$output_dir/GitCalendar-$version.dmg"
 hdiutil create \

@@ -24,6 +24,10 @@ struct CalendarEntityQuery: EntityQuery {
     func suggestedEntities() async throws -> [CalendarEntity] {
         SharedStore.loadConfigurations().map { CalendarEntity(id: $0.id, name: $0.name) }
     }
+
+    func defaultResult() async -> CalendarEntity? {
+        SharedStore.loadConfigurations().first.map { CalendarEntity(id: $0.id, name: $0.name) }
+    }
 }
 
 struct CalendarWidgetIntent: WidgetConfigurationIntent {

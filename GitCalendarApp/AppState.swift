@@ -18,6 +18,7 @@ final class AppState: ObservableObject {
     @Published var refreshingIDs: Set<UUID> = []
     @Published var lastError: String?
     @Published var availableUpdate: AppRelease?
+    @Published private(set) var isWidgetSharingAvailable: Bool
 
     private var refreshTimer: Timer?
 
@@ -26,6 +27,7 @@ final class AppState: ObservableObject {
         configurations = storedConfigurations
         snapshots = Dictionary(uniqueKeysWithValues: SharedStore.loadSnapshots().map { ($0.id, $0) })
         selectedCalendarID = storedConfigurations.first?.id
+        isWidgetSharingAvailable = SharedStore.isAppGroupAvailable
         scheduleRefreshTimer()
 
         Task { [weak self] in
@@ -48,7 +50,7 @@ final class AppState: ObservableObject {
         var configuration = CalendarConfiguration(
             name: folderURL.lastPathComponent,
             folderPath: folderURL.path,
-            authorPatterns: GitIdentity.currentPatterns()
+            authorPatterns: []
         )
         if configuration.name.isEmpty { configuration.name = "Новый календарь" }
         editingConfiguration = configuration
@@ -145,27 +147,5 @@ final class AppState: ObservableObject {
         } catch {
             lastError = "Не удалось сохранить данные: \(error.localizedDescription)"
         }
-    }
-}
-
-enum GitIdentity {
-    static func currentPatterns() -> [String] {
-        [readGlobalConfig("user.email"), readGlobalConfig("user.name")]
-            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-    }
-
-    private static func readGlobalConfig(_ key: String) -> String? {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
-        process.arguments = ["config", "--global", "--get", key]
-        let output = Pipe()
-        process.standardOutput = output
-        process.standardError = Pipe()
-        try? process.run()
-        let data = output.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-        guard process.terminationStatus == 0 else { return nil }
-        return String(decoding: data, as: UTF8.self)
     }
 }

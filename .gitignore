@@ -2,6 +2,8 @@
 .derivedData/
 .signedDerivedData/
 .ciDerivedData/
+.ciProbeDerivedData/
+.releaseDerivedData/
 DerivedData/
 dist/
 xcuserdata/

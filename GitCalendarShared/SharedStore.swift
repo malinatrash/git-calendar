@@ -1,11 +1,37 @@
 import Foundation
 
-enum SharedStore {
-    private static let configurationsKey = "calendarConfigurations.v1"
-    private static let widgetSnapshotsKey = "widgetSnapshots.v1"
+enum SharedStoreError: LocalizedError {
+    case appGroupUnavailable
 
-    private static var sharedDefaults: UserDefaults {
-        UserDefaults(suiteName: SharedConstants.appGroup) ?? .standard
+    var errorDescription: String? {
+        switch self {
+        case .appGroupUnavailable:
+            "Общий контейнер виджета недоступен. Запустите корректно подписанную сборку Git Calendar."
+        }
+    }
+}
+
+enum SharedStore {
+    private static let configurationsFileName = "calendar-configurations-v2.json"
+    private static let widgetSnapshotsFileName = "widget-snapshots-v2.json"
+
+    static var isAppGroupAvailable: Bool {
+        sharedContainerDirectory != nil
+    }
+
+    private static var sharedContainerDirectory: URL? {
+        guard !SharedConstants.appGroup.isEmpty else { return nil }
+        return FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: SharedConstants.appGroup
+        )?.appendingPathComponent("Library/Application Support/GitCalendar", isDirectory: true)
+    }
+
+    private static var configurationsURL: URL? {
+        sharedContainerDirectory?.appendingPathComponent(configurationsFileName)
+    }
+
+    private static var widgetSnapshotsURL: URL? {
+        sharedContainerDirectory?.appendingPathComponent(widgetSnapshotsFileName)
     }
 
     private static var applicationSupportDirectory: URL {
@@ -15,23 +41,33 @@ enum SharedStore {
     }
 
     private static var snapshotsURL: URL {
-        applicationSupportDirectory.appendingPathComponent("snapshots.json")
+        applicationSupportDirectory.appendingPathComponent("snapshots-v2.json")
     }
 
     static func loadConfigurations() -> [CalendarConfiguration] {
-        decode([CalendarConfiguration].self, from: sharedDefaults.data(forKey: configurationsKey)) ?? []
+        guard let url = configurationsURL, let data = try? Data(contentsOf: url) else { return [] }
+        return decode([CalendarConfiguration].self, from: data) ?? []
     }
 
     static func saveConfigurations(_ configurations: [CalendarConfiguration]) throws {
-        sharedDefaults.set(try encoder.encode(configurations), forKey: configurationsKey)
+        guard let url = configurationsURL, let directory = sharedContainerDirectory else {
+            throw SharedStoreError.appGroupUnavailable
+        }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try encoder.encode(configurations).write(to: url, options: .atomic)
     }
 
     static func loadWidgetSnapshots() -> [WidgetCalendarSnapshot] {
-        decode([WidgetCalendarSnapshot].self, from: sharedDefaults.data(forKey: widgetSnapshotsKey)) ?? []
+        guard let url = widgetSnapshotsURL, let data = try? Data(contentsOf: url) else { return [] }
+        return decode([WidgetCalendarSnapshot].self, from: data) ?? []
     }
 
     static func saveWidgetSnapshots(_ snapshots: [WidgetCalendarSnapshot]) throws {
-        sharedDefaults.set(try encoder.encode(snapshots), forKey: widgetSnapshotsKey)
+        guard let url = widgetSnapshotsURL, let directory = sharedContainerDirectory else {
+            throw SharedStoreError.appGroupUnavailable
+        }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        try encoder.encode(snapshots).write(to: url, options: .atomic)
     }
 
     static func loadSnapshots() -> [CalendarSnapshot] {

@@ -35,11 +35,25 @@ struct ContentView: View {
                     onSelectDay: { appState.selectedDay = SelectedDay(calendarID: configuration.id, dayKey: $0) }
                 )
             } else {
-                ContentUnavailableView(
-                    "Добавьте календарь",
-                    systemImage: "calendar.badge.plus",
-                    description: Text("Выберите папку, содержащую один или несколько Git-репозиториев.")
-                )
+                VStack(spacing: 16) {
+                    ContentUnavailableView {
+                        Label("Добавьте календарь", systemImage: "calendar.badge.plus")
+                    } description: {
+                        Text("Выберите папку, содержащую один или несколько Git-репозиториев.")
+                    } actions: {
+                        Button("Выбрать папку…", action: chooseFolder)
+                            .buttonStyle(.borderedProminent)
+                    }
+
+                    if !appState.isWidgetSharingAvailable {
+                        Label(
+                            "Общий контейнер виджета недоступен в этой сборке.",
+                            systemImage: "exclamationmark.triangle.fill"
+                        )
+                        .font(.callout)
+                        .foregroundStyle(.orange)
+                    }
+                }
             }
         }
         .sheet(item: $appState.editingConfiguration) { configuration in
