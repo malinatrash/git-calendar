@@ -68,6 +68,26 @@ private struct CommitRow: View {
                 }
             }
 
+            if let quality = commit.quality {
+                if quality.recentReworkLines > 0 {
+                    Label(
+                        "Churn: \(quality.recentReworkLines) строк (\(quality.recentReworkPercent.formatted(.number.precision(.fractionLength(1))))%) переписано за 14 дней",
+                        systemImage: "arrow.triangle.2.circlepath"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.blue)
+                }
+
+                ForEach(Array(quality.fileChanges.filter { !$0.issues.isEmpty }.prefix(3)), id: \.path) { file in
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(file.path).font(.caption.monospaced()).lineLimit(1).truncationMode(.middle)
+                        Text(file.issues.map(\.title).joined(separator: " · "))
+                            .font(.caption2)
+                            .foregroundStyle(.orange)
+                    }
+                }
+            }
+
             HStack {
                 Button("Скопировать SHA") {
                     NSPasteboard.general.clearContents()

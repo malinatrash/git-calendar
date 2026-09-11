@@ -60,13 +60,67 @@ enum RiskReason: String, Codable, CaseIterable, Hashable, Sendable {
     case largeChange
     case wideChange
     case sourceWithoutTests
+    case highFileSize
+    case highComplexity
+    case deepNesting
+    case highCoupling
+    case longFunction
+    case poorReadability
+    case functionalityOverload
+    case recentRework
 
     var title: String {
         switch self {
         case .largeChange: "Крупное изменение"
         case .wideChange: "Широкая область изменения"
         case .sourceWithoutTests: "Код без сопутствующих тестов"
+        case .highFileSize: "Размер файла вырос выше нормы"
+        case .highComplexity: "Сложность выросла выше нормы"
+        case .deepNesting: "Глубокая вложенность"
+        case .highCoupling: "Связность выросла выше нормы"
+        case .longFunction: "Слишком длинная функция"
+        case .poorReadability: "Ухудшение читаемости"
+        case .functionalityOverload: "Перегрузка обязанностями"
+        case .recentRework: "Повторно изменён свежий код"
         }
+    }
+}
+
+struct SourceMetrics: Codable, Hashable, Sendable {
+    var codeLines: Int
+    var commentRatio: Double
+    var longLineRatio: Double
+    var cyclomaticComplexity: Int
+    var maximumNesting: Int
+    var dependencyCount: Int
+    var functionCount: Int
+    var maximumFunctionLength: Int
+}
+
+struct FileQualityChange: Codable, Hashable, Sendable {
+    var path: String
+    var before: SourceMetrics
+    var after: SourceMetrics
+    var issues: [RiskReason]
+    var improvements: [RiskReason]
+    var riskScore: Double
+}
+
+struct CommitQuality: Codable, Hashable, Sendable {
+    var analyzedSourceFiles: Int
+    var eligibleSourceFiles: Int
+    var fileChanges: [FileQualityChange]
+    var recentReworkLines: Int
+    var changedCodeLines: Int
+
+    var analysisCoveragePercent: Double {
+        guard eligibleSourceFiles > 0 else { return 100 }
+        return Double(analyzedSourceFiles) / Double(eligibleSourceFiles) * 100
+    }
+
+    var recentReworkPercent: Double {
+        guard changedCodeLines > 0 else { return 0 }
+        return Double(recentReworkLines) / Double(changedCodeLines) * 100
     }
 }
 
@@ -83,6 +137,7 @@ struct CommitRecord: Codable, Identifiable, Hashable, Sendable {
     var files: [ChangedFile]
     var riskReasons: [RiskReason]
     var riskWeight: Double
+    var quality: CommitQuality? = nil
 
     var shortHash: String { String(hash.prefix(8)) }
     var additions: Int { files.reduce(0) { $0 + $1.additions } }
@@ -98,6 +153,8 @@ struct DayActivity: Codable, Identifiable, Hashable, Sendable {
     var changedLines: Int
     var riskPercent: Double
     var effortUnits: Double
+    var analyzedEffortUnits: Double? = nil
+    var actualEffortUnits: Double? = nil
 }
 
 struct MetricSummary: Codable, Hashable, Sendable {
@@ -111,6 +168,8 @@ struct MetricSummary: Codable, Hashable, Sendable {
     var aceProxy: Double
     var aberrantBCEProxyPercent: Double
     var repositories: Int
+    var averageCommitIntervalDays: Double? = nil
+    var analyzedCommitPercent: Double? = nil
 
     static let empty = MetricSummary(
         totalCommits: 0,
@@ -122,7 +181,9 @@ struct MetricSummary: Codable, Hashable, Sendable {
         bcePerDayProxy: 0,
         aceProxy: 0,
         aberrantBCEProxyPercent: 0,
-        repositories: 0
+        repositories: 0,
+        averageCommitIntervalDays: nil,
+        analyzedCommitPercent: nil
     )
 }
 

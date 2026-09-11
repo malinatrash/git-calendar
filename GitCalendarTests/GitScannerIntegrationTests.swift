@@ -24,6 +24,43 @@ final class GitScannerIntegrationTests: XCTestCase {
         XCTAssertEqual(snapshot.warnings, [])
     }
 
+    func testAlwaysExcludesMergeCommits() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("git-calendar-merge-tests-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try createRepository(at: root, subject: "initial")
+
+        try runGit(["checkout", "-q", "-b", "feature"], at: root)
+        try "package feature\n".write(to: root.appendingPathComponent("feature.go"), atomically: true, encoding: .utf8)
+        try runGit(["add", "feature.go"], at: root)
+        try runGit(["commit", "--quiet", "-m", "feature"], at: root)
+        try runGit(["checkout", "-q", "-"], at: root)
+        try "package main\n".write(to: root.appendingPathComponent("other.go"), atomically: true, encoding: .utf8)
+        try runGit(["add", "other.go"], at: root)
+        try runGit(["commit", "--quiet", "-m", "main change"], at: root)
+        try runGit(["merge", "--quiet", "--no-ff", "feature", "-m", "merge feature"], at: root)
+
+        var configuration = CalendarConfiguration(
+            name: "Fixture",
+            folderPath: root.path,
+            authorPatterns: ["calendar@example.com"]
+        )
+        configuration.includeMerges = true
+        configuration.largeChangeThreshold = 1
+        configuration.testsExpectedAfterLines = 1
+        configuration.wideChangeFileThreshold = 1
+
+        let snapshot = try GitScanner().scan(configuration: configuration)
+
+        XCTAssertEqual(snapshot.commits.count, 3)
+        XCTAssertFalse(snapshot.commits.contains { $0.subject == "merge feature" })
+        XCTAssertTrue(snapshot.commits.contains {
+            $0.riskReasons.contains(.largeChange)
+                && $0.riskReasons.contains(.wideChange)
+                && $0.riskReasons.contains(.sourceWithoutTests)
+        })
+    }
+
     private func createRepository(at url: URL, subject: String) throws {
         try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         try runGit(["init", "--quiet"], at: url)

@@ -53,26 +53,28 @@ final class MetricEngineTests: XCTestCase {
         XCTAssertGreaterThan(snapshot.days.last?.effortUnits ?? 0, 0)
     }
 
-    func testRiskProxyRewardsTestsWithoutTreatingItAsOfficialBCE() {
-        var configuration = CalendarConfiguration(name: "Test", folderPath: "/tmp")
-        configuration.testsExpectedAfterLines = 50
-        configuration.largeChangeThreshold = 500
+    func testRelativeRiskFlagsWorseningButNotImprovement() {
+        let thresholds = MetricThresholds.fallback
+        let healthy = metrics(complexity: 10)
+        let complex = metrics(complexity: 40)
 
-        let withoutTests = RiskAnalyzer.assess(
-            files: [ChangedFile(path: "service.go", additions: 80, deletions: 0, isBinary: false)],
-            configuration: configuration
+        let worsening = RelativeRiskAnalyzer.assess(
+            path: "service.go",
+            before: healthy,
+            after: complex,
+            thresholds: thresholds
         )
-        let withTests = RiskAnalyzer.assess(
-            files: [
-                ChangedFile(path: "service.go", additions: 80, deletions: 0, isBinary: false),
-                ChangedFile(path: "service_test.go", additions: 40, deletions: 0, isBinary: false)
-            ],
-            configuration: configuration
+        let improvement = RelativeRiskAnalyzer.assess(
+            path: "service.go",
+            before: complex,
+            after: healthy,
+            thresholds: thresholds
         )
 
-        XCTAssertTrue(withoutTests.reasons.contains(.sourceWithoutTests))
-        XCTAssertFalse(withTests.reasons.contains(.sourceWithoutTests))
-        XCTAssertGreaterThan(withoutTests.weight, withTests.weight)
+        XCTAssertTrue(worsening.issues.contains(.highComplexity))
+        XCTAssertGreaterThan(worsening.riskScore, 0)
+        XCTAssertTrue(improvement.improvements.contains(.highComplexity))
+        XCTAssertEqual(improvement.riskScore, 0)
     }
 
     func testGeneratedCodeDoesNotInflateEffort() {
@@ -85,7 +87,75 @@ final class MetricEngineTests: XCTestCase {
             files: [ChangedFile(path: "service.go", additions: 100, deletions: 0, isBinary: false)]
         )
 
-        XCTAssertLessThan(MetricEngine.effortUnits(for: generated), MetricEngine.effortUnits(for: meaningful))
+        XCTAssertEqual(MetricEngine.effortUnits(for: generated), 0)
+        XCTAssertGreaterThan(MetricEngine.effortUnits(for: meaningful), 0)
+    }
+
+    func testAverageCommitIntervalUsesUniqueCalendarDays() throws {
+        let calendar = CalendarSupport.calendar(timeZoneIdentifier: "UTC")
+        let commits = [
+            makeCommit(date: "2026-09-01T09:00:00Z", files: []),
+            makeCommit(date: "2026-09-01T18:00:00Z", files: []),
+            makeCommit(date: "2026-09-04T09:00:00Z", files: [])
+        ]
+
+        XCTAssertEqual(MetricEngine.averageCommitIntervalDays(commits: commits, calendar: calendar), 3)
+    }
+
+    func testLineChurnFindsRecentlyRewrittenLineButNotMove() {
+        let output = """
+        \u{1e}first\u{1f}2026-09-01T10:00:00Z
+        diff --git a/main.go b/main.go
+        +++ b/main.go
+        @@ -0,0 +1,2 @@
+        +value := calculateResult(input)
+        +moved := preserveThisLine()
+        \u{1e}second\u{1f}2026-09-03T10:00:00Z
+        diff --git a/main.go b/main.go
+        +++ b/main.go
+        @@ -1,2 +1,2 @@
+        -value := calculateResult(input)
+        -moved := preserveThisLine()
+        +value := calculateResult(validatedInput)
+        +moved := preserveThisLine()
+        """
+
+        let churn = LineChurnAnalyzer.analyze(output)
+
+        XCTAssertEqual(churn["second"]?.recentReworkLines, 1)
+    }
+
+    func testStaticAnalysisCountsGoImportBlockAndControlFlow() {
+        let source = """
+        package sample
+        import (
+            "context"
+            "fmt"
+        )
+        func run(ok bool) {
+            if ok {
+                for i := 0; i < 2; i++ {}
+            }
+        }
+        """
+
+        let metrics = StaticSourceAnalyzer.analyze(source, path: "main.go")
+
+        XCTAssertEqual(metrics.dependencyCount, 2)
+        XCTAssertEqual(metrics.functionCount, 1)
+        XCTAssertGreaterThanOrEqual(metrics.cyclomaticComplexity, 3)
+    }
+
+    func testSwiftOptionalTypesDoNotCountAsBranches() {
+        let source = """
+        func parse(value: String?) -> String? {
+            value
+        }
+        """
+
+        let metrics = StaticSourceAnalyzer.analyze(source, path: "Parser.swift")
+
+        XCTAssertEqual(metrics.cyclomaticComplexity, 1)
     }
 
     private func makeCommit(date: String, files: [ChangedFile]) -> CommitRecord {
@@ -102,6 +172,19 @@ final class MetricEngineTests: XCTestCase {
             files: files,
             riskReasons: [],
             riskWeight: 0
+        )
+    }
+
+    private func metrics(complexity: Int) -> SourceMetrics {
+        SourceMetrics(
+            codeLines: 120,
+            commentRatio: 0.10,
+            longLineRatio: 0,
+            cyclomaticComplexity: complexity,
+            maximumNesting: 2,
+            dependencyCount: 4,
+            functionCount: 5,
+            maximumFunctionLength: 20
         )
     }
 }

@@ -45,7 +45,7 @@ struct CalendarEditorView: View {
 
                 Section("Git") {
                     Toggle("Учитывать все локальные ветки и refs", isOn: $configuration.includeAllRefs)
-                    Toggle("Учитывать merge-коммиты", isOn: $configuration.includeMerges)
+                    LabeledContent("Merge-коммиты", value: "Всегда исключены")
                 }
 
                 Section("Пороговые значения риска") {

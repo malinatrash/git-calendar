@@ -20,9 +20,11 @@ final class AppState: ObservableObject {
     @Published var availableUpdate: AppRelease?
     @Published private(set) var isWidgetSharingAvailable: Bool
 
+    private let scanner: any CalendarScanning
     private var refreshTimer: Timer?
 
-    init() {
+    init(scanner: any CalendarScanning = GitScanner()) {
+        self.scanner = scanner
         let storedConfigurations = SharedStore.loadConfigurations()
         configurations = storedConfigurations
         snapshots = Dictionary(uniqueKeysWithValues: SharedStore.loadSnapshots().map { ($0.id, $0) })
@@ -81,8 +83,9 @@ final class AppState: ObservableObject {
 
         Task {
             do {
+                let scanner = self.scanner
                 let snapshot = try await Task.detached(priority: .utility) {
-                    try GitScanner().scan(configuration: configuration)
+                    try scanner.scan(configuration: configuration)
                 }.value
                 snapshots[id] = snapshot
                 persist()

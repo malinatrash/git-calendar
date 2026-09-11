@@ -77,18 +77,33 @@ def refs_for(group, paths)
 end
 
 shared_refs = refs_for(groups["GitCalendarShared"], %w[Models.swift SharedStore.swift CalendarSupport.swift])
-app_refs = refs_for(groups["GitCalendarApp"], [
+app_paths = [
   "GitCalendarApp.swift",
   "AppState.swift",
   "GitScanner.swift",
   "MetricEngine.swift",
   "UpdateChecker.swift",
   "DesignSystem.swift",
+  "Analytics/SourceClassifier.swift",
+  "Analytics/LineChurnAnalyzer.swift",
+  "Analytics/StaticSourceAnalyzer.swift",
+  "Analytics/RelativeThresholds.swift",
+  "Analytics/RepositoryQualityAnalyzer.swift",
+  "Analytics/AdviceEngine.swift",
+  "Infrastructure/Git/GitClient.swift",
+  "Infrastructure/Git/RepositoryDiscovery.swift",
+  "Infrastructure/Git/GitLogParser.swift",
+  "Features/Dashboard/QualityAdviceView.swift",
+  "Features/Dashboard/DashboardSummaryViews.swift",
+  "Features/Dashboard/ActivityHeatmapView.swift",
+  "Features/Dashboard/DashboardCharts.swift",
   "Views/ContentView.swift",
   "Views/CalendarEditorView.swift",
   "Views/DashboardView.swift",
   "Views/DayDetailView.swift"
-])
+]
+app_refs = refs_for(groups["GitCalendarApp"], app_paths)
+app_refs_by_path = app_paths.zip(app_refs).to_h
 widget_refs = refs_for(groups["GitCalendarWidget"], %w[WidgetIntent.swift GitCalendarWidget.swift GitCalendarWidgetBundle.swift])
 test_refs = refs_for(groups["GitCalendarTests"], %w[MetricEngineTests.swift GitLogParserTests.swift GitScannerIntegrationTests.swift UpdateCheckerTests.swift])
 
@@ -96,7 +111,21 @@ app.add_file_references(shared_refs + app_refs)
 assets_ref = groups["GitCalendarApp"].new_file("Assets.xcassets")
 app.add_resources([assets_ref])
 widget.add_file_references(shared_refs + widget_refs)
-tests.add_file_references(shared_refs + [app_refs[2], app_refs[3], app_refs[4]] + test_refs)
+test_app_paths = [
+  "GitScanner.swift",
+  "MetricEngine.swift",
+  "UpdateChecker.swift",
+  "Analytics/SourceClassifier.swift",
+  "Analytics/LineChurnAnalyzer.swift",
+  "Analytics/StaticSourceAnalyzer.swift",
+  "Analytics/RelativeThresholds.swift",
+  "Analytics/RepositoryQualityAnalyzer.swift",
+  "Analytics/AdviceEngine.swift",
+  "Infrastructure/Git/GitClient.swift",
+  "Infrastructure/Git/RepositoryDiscovery.swift",
+  "Infrastructure/Git/GitLogParser.swift"
+]
+tests.add_file_references(shared_refs + test_app_paths.map { |path| app_refs_by_path.fetch(path) } + test_refs)
 
 app.add_dependency(widget)
 embed_phase = app.new_copy_files_build_phase("Embed Foundation Extensions")

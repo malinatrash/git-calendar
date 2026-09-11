@@ -41,6 +41,28 @@
 		E6F3CB7D7F9D6B816839718B /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98351F4D34FA61D2B6DF3E1D /* AppState.swift */; };
 		F0DD9BD30C79929501EB6F1B /* GitScannerIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDFEBF136CE459D3831DFD3C /* GitScannerIntegrationTests.swift */; };
 		F385EBDCDA1C71F44298CDEA /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ECB8DF7675C0CBFABA4A9A2 /* DesignSystem.swift */; };
+		F20000000000000000000001 /* SourceClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000001 /* SourceClassifier.swift */; };
+		F20000000000000000000002 /* GitClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000002 /* GitClient.swift */; };
+		F20000000000000000000003 /* RepositoryDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000003 /* RepositoryDiscovery.swift */; };
+		F20000000000000000000004 /* GitLogParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000004 /* GitLogParser.swift */; };
+		F20000000000000000000005 /* LineChurnAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000005 /* LineChurnAnalyzer.swift */; };
+		F20000000000000000000006 /* StaticSourceAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000006 /* StaticSourceAnalyzer.swift */; };
+		F20000000000000000000007 /* RelativeThresholds.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000007 /* RelativeThresholds.swift */; };
+		F20000000000000000000008 /* RepositoryQualityAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000008 /* RepositoryQualityAnalyzer.swift */; };
+		F20000000000000000000009 /* AdviceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000009 /* AdviceEngine.swift */; };
+		F20000000000000000000010 /* QualityAdviceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000010 /* QualityAdviceView.swift */; };
+		F20000000000000000000011 /* DashboardSummaryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000011 /* DashboardSummaryViews.swift */; };
+		F20000000000000000000012 /* ActivityHeatmapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000012 /* ActivityHeatmapView.swift */; };
+		F20000000000000000000013 /* DashboardCharts.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000013 /* DashboardCharts.swift */; };
+		F30000000000000000000001 /* SourceClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000001 /* SourceClassifier.swift */; };
+		F30000000000000000000002 /* GitClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000002 /* GitClient.swift */; };
+		F30000000000000000000003 /* RepositoryDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000003 /* RepositoryDiscovery.swift */; };
+		F30000000000000000000004 /* GitLogParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000004 /* GitLogParser.swift */; };
+		F30000000000000000000005 /* LineChurnAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000005 /* LineChurnAnalyzer.swift */; };
+		F30000000000000000000006 /* StaticSourceAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000006 /* StaticSourceAnalyzer.swift */; };
+		F30000000000000000000007 /* RelativeThresholds.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000007 /* RelativeThresholds.swift */; };
+		F30000000000000000000008 /* RepositoryQualityAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000008 /* RepositoryQualityAnalyzer.swift */; };
+		F30000000000000000000009 /* AdviceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000009 /* AdviceEngine.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -93,6 +115,19 @@
 		D47CA8177E7769D3B40B930A /* MetricEngine.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MetricEngine.swift; sourceTree = "<group>"; };
 		D62A19E4D6C7E476989E8F26 /* WidgetIntent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WidgetIntent.swift; sourceTree = "<group>"; };
 		D83CF0C66588DA4B72319C92 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		F10000000000000000000001 /* SourceClassifier.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Analytics/SourceClassifier.swift; sourceTree = "<group>"; };
+		F10000000000000000000002 /* GitClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Infrastructure/Git/GitClient.swift; sourceTree = "<group>"; };
+		F10000000000000000000003 /* RepositoryDiscovery.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Infrastructure/Git/RepositoryDiscovery.swift; sourceTree = "<group>"; };
+		F10000000000000000000004 /* GitLogParser.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Infrastructure/Git/GitLogParser.swift; sourceTree = "<group>"; };
+		F10000000000000000000005 /* LineChurnAnalyzer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Analytics/LineChurnAnalyzer.swift; sourceTree = "<group>"; };
+		F10000000000000000000006 /* StaticSourceAnalyzer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Analytics/StaticSourceAnalyzer.swift; sourceTree = "<group>"; };
+		F10000000000000000000007 /* RelativeThresholds.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Analytics/RelativeThresholds.swift; sourceTree = "<group>"; };
+		F10000000000000000000008 /* RepositoryQualityAnalyzer.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Analytics/RepositoryQualityAnalyzer.swift; sourceTree = "<group>"; };
+		F10000000000000000000009 /* AdviceEngine.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Analytics/AdviceEngine.swift; sourceTree = "<group>"; };
+		F10000000000000000000010 /* QualityAdviceView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Features/Dashboard/QualityAdviceView.swift; sourceTree = "<group>"; };
+		F10000000000000000000011 /* DashboardSummaryViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Features/Dashboard/DashboardSummaryViews.swift; sourceTree = "<group>"; };
+		F10000000000000000000012 /* ActivityHeatmapView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Features/Dashboard/ActivityHeatmapView.swift; sourceTree = "<group>"; };
+		F10000000000000000000013 /* DashboardCharts.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Features/Dashboard/DashboardCharts.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -137,6 +172,19 @@
 		34CE065AC04087B3F3B166E8 /* GitCalendarApp */ = {
 			isa = PBXGroup;
 			children = (
+				F10000000000000000000001 /* SourceClassifier.swift */,
+				F10000000000000000000002 /* GitClient.swift */,
+				F10000000000000000000003 /* RepositoryDiscovery.swift */,
+				F10000000000000000000004 /* GitLogParser.swift */,
+				F10000000000000000000005 /* LineChurnAnalyzer.swift */,
+				F10000000000000000000006 /* StaticSourceAnalyzer.swift */,
+				F10000000000000000000007 /* RelativeThresholds.swift */,
+				F10000000000000000000008 /* RepositoryQualityAnalyzer.swift */,
+				F10000000000000000000009 /* AdviceEngine.swift */,
+				F10000000000000000000010 /* QualityAdviceView.swift */,
+				F10000000000000000000011 /* DashboardSummaryViews.swift */,
+				F10000000000000000000012 /* ActivityHeatmapView.swift */,
+				F10000000000000000000013 /* DashboardCharts.swift */,
 				41402DAEE9AFB98386409C90 /* GitCalendarApp.swift */,
 				98351F4D34FA61D2B6DF3E1D /* AppState.swift */,
 				287996ED6039BBCEDAAB60E7 /* GitScanner.swift */,
@@ -331,6 +379,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F20000000000000000000001 /* SourceClassifier.swift in Sources */,
+				F20000000000000000000002 /* GitClient.swift in Sources */,
+				F20000000000000000000003 /* RepositoryDiscovery.swift in Sources */,
+				F20000000000000000000004 /* GitLogParser.swift in Sources */,
+				F20000000000000000000005 /* LineChurnAnalyzer.swift in Sources */,
+				F20000000000000000000006 /* StaticSourceAnalyzer.swift in Sources */,
+				F20000000000000000000007 /* RelativeThresholds.swift in Sources */,
+				F20000000000000000000008 /* RepositoryQualityAnalyzer.swift in Sources */,
+				F20000000000000000000009 /* AdviceEngine.swift in Sources */,
+				F20000000000000000000010 /* QualityAdviceView.swift in Sources */,
+				F20000000000000000000011 /* DashboardSummaryViews.swift in Sources */,
+				F20000000000000000000012 /* ActivityHeatmapView.swift in Sources */,
+				F20000000000000000000013 /* DashboardCharts.swift in Sources */,
 				B0BA4C0396D5902C3A0310F2 /* Models.swift in Sources */,
 				BDF3AC8575402F649C4C5A3C /* SharedStore.swift in Sources */,
 				CF0CB3300401EF624125CFF0 /* CalendarSupport.swift in Sources */,
@@ -351,6 +412,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F30000000000000000000001 /* SourceClassifier.swift in Sources */,
+				F30000000000000000000002 /* GitClient.swift in Sources */,
+				F30000000000000000000003 /* RepositoryDiscovery.swift in Sources */,
+				F30000000000000000000004 /* GitLogParser.swift in Sources */,
+				F30000000000000000000005 /* LineChurnAnalyzer.swift in Sources */,
+				F30000000000000000000006 /* StaticSourceAnalyzer.swift in Sources */,
+				F30000000000000000000007 /* RelativeThresholds.swift in Sources */,
+				F30000000000000000000008 /* RepositoryQualityAnalyzer.swift in Sources */,
+				F30000000000000000000009 /* AdviceEngine.swift in Sources */,
 				2B93BBE689B8088826A4B790 /* Models.swift in Sources */,
 				88FF88FE3D3A24B836E8BE0D /* SharedStore.swift in Sources */,
 				C3694831F24F4F883F529FDB /* CalendarSupport.swift in Sources */,
